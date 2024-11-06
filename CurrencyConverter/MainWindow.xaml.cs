@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using CurrencyConverter.Models;
+using Newtonsoft.Json;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
@@ -15,6 +16,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using CurrencyConverter.Services;
 
 namespace CurrencyConverter
 {
@@ -23,107 +25,30 @@ namespace CurrencyConverter
     /// </summary>
     /// 
 
-    
+
     public partial class MainWindow : Window
     {
-        
-        Root val = new Root();
 
-        HttpClient httpClient = new HttpClient();
-
-        
+        private DataService _dataService;
+        private ButtonService _buttonService;
 
         public MainWindow()
         {
             InitializeComponent();
 
-            //ClearControls method to clear all controls value
-            ClearControls();
-            GetValue();
+            _dataService = new DataService(this);
+            _buttonService = new ButtonService(this);
+
+            // Call GetValue asynchronously
+            _ = _dataService.GetValueAsync();
         }
 
-        private async void GetValue()
-        {
-            val = await GetData<Root>("https://openexchangerates.org/api/latest.json?app_id=aa0a368a03504ffab02db52b9e255b10");
-            BindCurrency();
-        }
-
-
-        // method to return api response
-        public static async Task<Root> GetData<T>(string url)
-        {
-            var myRoot = new Root();
-            try
-            {
-                using (var client = new HttpClient())
-                {
-                    client.Timeout = TimeSpan.FromMinutes(1);
-                    HttpResponseMessage response = await client.GetAsync(url);
-                    if (response.StatusCode == System.Net.HttpStatusCode.OK)
-                    {
-                        var ResponseString = await response.Content.ReadAsStringAsync();
-                        var ResponseObject = JsonConvert.DeserializeObject<Root>(ResponseString);
-
-                        //MessageBox.Show("Rates: " + ResponseString, "Information", MessageBoxButton.OK, MessageBoxImage.Information);
-
-                        return ResponseObject;
-                    }
-                    return myRoot;
-                }
-            }
-            catch
-            {
-                return myRoot;
-            }
-        }
-
-
-        private void BindCurrency()
-        {
-            DataTable dt = new DataTable();
-
-            dt.Columns.Add("Text");
-            dt.Columns.Add("Value");
-
-            dt.Rows.Add("--SELECT--", 0);
-            dt.Rows.Add("INR", val.rates.INR);
-            dt.Rows.Add("USD", val.rates.USD);
-            dt.Rows.Add("NZD", val.rates.NZD);
-            dt.Rows.Add("JPY", val.rates.JPY);
-            dt.Rows.Add("EUR", val.rates.EUR);
-            dt.Rows.Add("CAD", val.rates.CAD);
-            dt.Rows.Add("ISK", val.rates.ISK);
-            dt.Rows.Add("PHP", val.rates.PHP);
-            dt.Rows.Add("DKK", val.rates.DKK);
-            dt.Rows.Add("CZK", val.rates.CZK);
-
-            cmbFromCurrency.ItemsSource = dt.DefaultView;
-            cmbFromCurrency.DisplayMemberPath = "Text";
-            cmbFromCurrency.SelectedValuePath = "Value";
-
-            cmbFromCurrency.SelectedIndex = 0;
-
-            cmbToCurrency.ItemsSource = dt.DefaultView;
-            cmbToCurrency.DisplayMemberPath = "Text";
-            cmbToCurrency.SelectedValuePath = "Value";
-            cmbToCurrency.SelectedIndex = 0;
-            
-        }
-        //ClearControls used for clear all controls value
-        private void ClearControls()
-        {
-            txtCurrency.Text = string.Empty;
-            if (cmbFromCurrency.Items.Count > 0)
-                cmbFromCurrency.SelectedIndex = 0;
-            if (cmbToCurrency.Items.Count > 0)
-                cmbToCurrency.SelectedIndex = 0;
-            lblCurrency.Content = "";
-            txtCurrency.Focus();
-        }
+        
+       
         private void Clear_Click(object sender, RoutedEventArgs e)
         {
             //ClearControls method  is used to clear all control value
-            ClearControls();
+            _buttonService.ClearControls();
         }
 
 
